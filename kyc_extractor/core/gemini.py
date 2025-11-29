@@ -1,8 +1,8 @@
 import google.generativeai as genai
 from PIL import Image
 import json
-from app.core.config import settings
-from app.core.prompts import EXTRACTION_PROMPT
+from kyc_extractor.core.config import settings
+from kyc_extractor.core.prompts import EXTRACTION_PROMPT
 
 class GeminiClient:
     def __init__(self):

@@ -42,7 +42,7 @@ This project is a Proof of Concept (POC) for automatically extracting company de
 
 ### Running the API Server
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn kyc_extractor.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Testing the API
@@ -60,7 +60,7 @@ curl -X POST "http://localhost:8000/extract" \
 ```
 
 ## Project Structure
-*   `app/`: Core application code.
+*   `kyc_extractor/`: Core application code.
     *   `main.py`: API endpoints.
     *   `core/`: Config, Gemini client, and Prompts.
     *   `services/`: Image processing logic.

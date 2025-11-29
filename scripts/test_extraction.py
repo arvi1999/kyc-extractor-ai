@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PIL import Image
 from pdf2image import convert_from_path
-from app.core.gemini import gemini_client
+from kyc_extractor.core.gemini import gemini_client
 import argparse
 
 def main():

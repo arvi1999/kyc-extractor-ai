@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from app.schemas import ExtractionResponse
-from app.services.image_processor import image_processor
-from app.core.gemini import gemini_client
+from kyc_extractor.schemas import ExtractionResponse
+from kyc_extractor.services.image_processor import image_processor
+from kyc_extractor.core.gemini import gemini_client
 import time
 
 app = FastAPI(title="Company Name Cleaning (CC) API", version="0.1.0")
