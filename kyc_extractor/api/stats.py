@@ -74,3 +74,25 @@ def get_stats(
     
     stats['recent_activity'] = transformed_activity
     return stats
+
+@router.get("/avg-processing-time")
+def get_avg_processing_time_endpoint(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get average processing time from recent extractions
+    Used for progress bar time estimation
+    """
+    from kyc_extractor.db.crud import get_avg_processing_time
+    
+    avg_time = get_avg_processing_time(
+        db,
+        user_id=current_user.id,
+        role=current_user.role
+    )
+    
+    return {
+        "avg_time_ms": avg_time,
+        "estimated_seconds": round(avg_time / 1000, 1)
+    }

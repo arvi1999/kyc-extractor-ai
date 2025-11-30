@@ -236,3 +236,28 @@ def get_dashboard_stats(db: Session, user_id: int = None, role: str = "user"):
         },
         "recent_activity": recent_activity
     }
+
+def get_avg_processing_time(db: Session, user_id: int = None, role: str = "user", limit: int = 7):
+    """
+    Get average processing time from recent successful extractions
+    Returns time in milliseconds
+    """
+    from kyc_extractor.db.models import Extraction
+    
+    query = db.query(Extraction).filter(
+        Extraction.processing_time_ms.isnot(None),
+        Extraction.processing_time_ms > 0
+    )
+    
+    # Filter by user if not admin
+    if role != "admin" and user_id:
+        query = query.filter(Extraction.user_id == user_id)
+    
+    # Get last N extractions
+    recent = query.order_by(desc(Extraction.uploaded_at)).limit(limit).all()
+    
+    if not recent:
+        return 3000  # Default 3 seconds
+    
+    avg_time = sum(e.processing_time_ms for e in recent) / len(recent)
+    return int(avg_time)

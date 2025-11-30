@@ -1,14 +1,30 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload as UploadIcon, FileText, X, CheckCircle, AlertCircle, Loader2, Sparkles, Zap } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import clsx from 'clsx';
+import ProgressBar from '../components/ProgressBar';
 
 export default function Upload() {
     const [files, setFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
+    const [progress, setProgress] = useState(0);
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const [statusText, setStatusText] = useState('');
+    const progressInterval = useRef(null);
+
+    // Fetch average processing time
+    const { data: avgTimeData } = useQuery({
+        queryKey: ['avg-processing-time'],
+        queryFn: async () => {
+            const res = await api.get('/stats/avg-processing-time');
+            return res.data;
+        },
+        staleTime: 60000 // Cache for 1 minute
+    });
 
     const onDrop = useCallback((acceptedFiles) => {
         setFiles(prev => [...prev, ...acceptedFiles]);
@@ -29,12 +45,71 @@ export default function Upload() {
         setFiles(prev => prev.filter((_, i) => i !== index));
     };
 
+    const getStatusText = (prog) => {
+        if (prog < 25) return "Uploading document...";
+        if (prog < 50) return "Analyzing document...";
+        if (prog < 75) return "Extracting data...";
+        if (prog < 95) return "Validating results...";
+        return "Finalizing...";
+    };
+
+    const simulateProgress = (estimatedMs) => {
+        const startTime = Date.now();
+        const updateInterval = 100; // Update every 100ms
+        const maxProgress = 95; // Hold at 95% until actual response
+
+        progressInterval.current = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            setElapsedTime(elapsed);
+
+            // Calculate progress based on elapsed time vs estimated time
+            let currentProgress = (elapsed / estimatedMs) * 100;
+            currentProgress = Math.min(currentProgress, maxProgress);
+
+            setProgress(currentProgress);
+            setStatusText(getStatusText(currentProgress));
+
+            // Stop at 95% and wait for actual response
+            if (currentProgress >= maxProgress) {
+                clearInterval(progressInterval.current);
+            }
+        }, updateInterval);
+    };
+
+    const stopProgress = () => {
+        if (progressInterval.current) {
+            clearInterval(progressInterval.current);
+            progressInterval.current = null;
+        }
+        setProgress(100);
+        setStatusText("Complete!");
+        setTimeout(() => {
+            setProgress(0);
+            setElapsedTime(0);
+            setStatusText('');
+        }, 1500);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (progressInterval.current) {
+                clearInterval(progressInterval.current);
+            }
+        };
+    }, []);
+
     const handleUpload = async () => {
         if (files.length === 0) return;
 
         setUploading(true);
         setError(null);
         setResults(null);
+        setProgress(0);
+        setElapsedTime(0);
+
+        // Start progress simulation
+        const estimatedMs = avgTimeData?.avg_time_ms || 3000;
+        simulateProgress(estimatedMs);
 
         try {
             if (files.length === 1) {
@@ -55,9 +130,11 @@ export default function Upload() {
                 setResults(response.data.results);
             }
             setFiles([]);
+            stopProgress();
         } catch (err) {
             console.error(err);
             setError(err.response?.data?.detail || 'Upload failed. Please try again.');
+            stopProgress();
         } finally {
             setUploading(false);
         }
@@ -160,6 +237,16 @@ export default function Upload() {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Progress Bar */}
+            {uploading && progress > 0 && (
+                <ProgressBar
+                    progress={progress}
+                    estimatedMs={avgTimeData?.avg_time_ms || 3000}
+                    elapsedMs={elapsedTime}
+                    status={statusText}
+                />
             )}
 
             {/* Error Message */}
