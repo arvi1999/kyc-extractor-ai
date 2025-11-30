@@ -7,6 +7,7 @@ from kyc_extractor.db import crud
 from kyc_extractor.db.models import User
 from kyc_extractor.validators import validate_extraction, calculate_data_quality_score, get_quality_grade
 from kyc_extractor.api.auth import router as auth_router
+from kyc_extractor.api.stats import router as stats_router
 from kyc_extractor.api.deps import get_current_user, get_current_active_user
 from sqlalchemy.orm import Session
 import time
@@ -17,7 +18,8 @@ from typing import Optional, List
 app = FastAPI(title="Company Name Cleaning (CC) API", version="0.3.0")
 
 # Include Auth Router
-app.include_router(auth_router)
+app.include_router(auth_router, tags=["Authentication"])
+app.include_router(stats_router, prefix="/stats", tags=["Statistics"])
 
 @app.get("/")
 def read_root():

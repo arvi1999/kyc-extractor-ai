@@ -13,6 +13,7 @@ class User(Base):
     role = Column(String(20), default="user")  # 'admin' or 'user'
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_login = Column(DateTime(timezone=True), nullable=True)
     
     extractions = relationship("Extraction", back_populates="user")
 

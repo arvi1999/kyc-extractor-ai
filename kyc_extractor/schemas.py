@@ -60,12 +60,15 @@ class UserCreate(UserBase):
     password: str
     role: str = "user" # 'admin' or 'user'
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
+    email: str
+    full_name: Optional[str] = None
     role: str
     is_active: bool
     created_at: datetime
-
+    last_login: Optional[datetime] = None
+    
     class Config:
         from_attributes = True # Pydantic v2 uses from_attributes instead of orm_mode
 

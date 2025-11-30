@@ -199,9 +199,12 @@ export default function Upload() {
                                     )}>
                                         Grade {result.quality_grade} ({result.data_quality_score}%)
                                     </div>
-                                    <span className="text-xs text-slate-500">
-                                        Confidence: {(result.confidence * 100).toFixed(0)}%
-                                    </span>
+                                    <a
+                                        href={`/extraction/${result.request_id}`}
+                                        className="text-sm text-purple-400 hover:text-purple-300 font-medium flex items-center gap-1 transition-colors"
+                                    >
+                                        View Details <Sparkles className="w-3 h-3" />
+                                    </a>
                                 </div>
                             </div>
 

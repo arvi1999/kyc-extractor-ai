@@ -7,15 +7,32 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Check if token exists on load
-        const token = localStorage.getItem('token');
-        if (token) {
-            // Ideally verify token with backend, for now just assume logged in
-            // We could add a /me endpoint to fetch user details
-            setUser({ token });
+    const fetchUserDetails = async () => {
+        try {
+            const response = await api.get('/auth/me');
+            setUser(response.data);
+            return true;
+        } catch (error) {
+            console.error('Failed to fetch user details:', error);
+            // Only logout on 401 (unauthorized), not on network errors
+            if (error.response?.status === 401) {
+                localStorage.removeItem('token');
+                setUser(null);
+            }
+            return false;
         }
-        setLoading(false);
+    };
+
+    useEffect(() => {
+        const initAuth = async () => {
+            // Check if token exists on load
+            const token = localStorage.getItem('token');
+            if (token) {
+                await fetchUserDetails();
+            }
+            setLoading(false);
+        };
+        initAuth();
     }, []);
 
     const login = async (email, password) => {
@@ -29,7 +46,10 @@ export const AuthProvider = ({ children }) => {
 
         const { access_token } = response.data;
         localStorage.setItem('token', access_token);
-        setUser({ token: access_token, email });
+
+        // Fetch full user details after login
+        await fetchUserDetails();
+
         return true;
     };
 

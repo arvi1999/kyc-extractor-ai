@@ -94,7 +94,7 @@ export default function History() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-2 text-sm text-slate-300">
                                                 <Calendar className="h-4 w-4 text-slate-500" />
-                                                {new Date(item.uploaded_at).toLocaleDateString()}
+                                                {item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : 'N/A'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -108,16 +108,13 @@ export default function History() {
                                                 {item.quality_grade} ({item.data_quality_score}%)
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {item.data_quality_score >= 80 ? (
-                                                <span className="inline-flex items-center gap-1.5 text-green-400 text-sm font-medium">
-                                                    <CheckCircle className="h-4 w-4" /> Verified
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
-                                                    <AlertCircle className="h-4 w-4" /> Review
-                                                </span>
-                                            )}
+                                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                                            <a
+                                                href={`/extraction/${item.request_id}`}
+                                                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                                            >
+                                                View <ChevronRight className="h-4 w-4" />
+                                            </a>
                                         </td>
                                     </tr>
                                 ))}

@@ -8,6 +8,8 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Upload from './pages/Upload';
 import History from './pages/History';
+import Users from './pages/Users';
+import ExtractionDetails from './pages/ExtractionDetails';
 
 const queryClient = new QueryClient();
 
@@ -46,7 +48,15 @@ function App() {
             <Route path="/users" element={
               <ProtectedRoute>
                 <Layout>
-                  <div className="text-white">Users Page (Coming Soon)</div>
+                  <Users />
+                </Layout>
+              </ProtectedRoute>
+            } />
+
+            <Route path="/extraction/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ExtractionDetails />
                 </Layout>
               </ProtectedRoute>
             } />
