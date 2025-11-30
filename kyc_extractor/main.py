@@ -4,28 +4,38 @@ from kyc_extractor.services.image_processor import image_processor
 from kyc_extractor.core.gemini import gemini_client
 from kyc_extractor.db.database import get_db
 from kyc_extractor.db import crud
+from kyc_extractor.db.models import User
 from kyc_extractor.validators import validate_extraction, calculate_data_quality_score, get_quality_grade
+from kyc_extractor.api.auth import router as auth_router
+from kyc_extractor.api.deps import get_current_user, get_current_active_user
 from sqlalchemy.orm import Session
 import time
 import uuid
 from datetime import datetime
 from typing import Optional, List
 
-app = FastAPI(title="Company Name Cleaning (CC) API", version="0.2.0")
+app = FastAPI(title="Company Name Cleaning (CC) API", version="0.3.0")
+
+# Include Auth Router
+app.include_router(auth_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to Company Name Cleaning (CC) API", "version": "0.2.0"}
+    return {"message": "Welcome to Company Name Cleaning (CC) API", "version": "0.3.0"}
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 @app.post("/extract", response_model=ExtractionResponse)
-async def extract_document(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def extract_document(
+    file: UploadFile = File(...), 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Extracts company details from an uploaded document (PDF or Image).
-    Now with database storage, validation, and quality scoring!
+    Protected: Requires valid JWT token.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename is missing")
@@ -71,9 +81,10 @@ async def extract_document(file: UploadFile = File(...), db: Session = Depends(g
         # Calculate processing time
         processing_time_ms = int((time.time() - start_time) * 1000)
         
-        # Save to database
+            # Save to database
         db_data = {
             "request_id": request_id,
+            "user_id": current_user.id,
             "filename": file.filename,
             "file_size_bytes": file_size,
             "document_type": document_type,
@@ -110,9 +121,14 @@ async def extract_document(file: UploadFile = File(...), db: Session = Depends(g
         await file.close()
 
 @app.post("/extract/batch", response_model=BatchExtractionResponse)
-async def extract_batch(files: List[UploadFile] = File(...), db: Session = Depends(get_db)):
+async def extract_batch(
+    files: List[UploadFile] = File(...), 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Extracts details from multiple documents in a single request.
+    Protected: Requires valid JWT token.
     """
     MAX_BATCH_SIZE = 10
     if len(files) > MAX_BATCH_SIZE:
@@ -173,6 +189,7 @@ async def extract_batch(files: List[UploadFile] = File(...), db: Session = Depen
             # Save to DB
             db_data = {
                 "request_id": request_id,
+                "user_id": current_user.id,
                 "filename": file.filename,
                 "file_size_bytes": file_size,
                 "document_type": document_type,
@@ -215,11 +232,15 @@ async def extract_batch(files: List[UploadFile] = File(...), db: Session = Depen
     )
 
 @app.get("/extract/{request_id}", response_model=ExtractionResponse)
-def get_extraction(request_id: str, db: Session = Depends(get_db)):
+def get_extraction(
+    request_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Retrieve a specific extraction by request_id
     """
-    extraction = crud.get_extraction_by_request_id(db, request_id)
+    extraction = crud.get_extraction_by_request_id(db, request_id, user_id=current_user.id, role=current_user.role)
     if not extraction:
         raise HTTPException(status_code=404, detail="Extraction not found")
     
@@ -250,7 +271,8 @@ def get_history(
     limit: int = Query(10, le=100),
     document_type: Optional[str] = None,
     days_ago: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get extraction history with optional filters
@@ -260,7 +282,9 @@ def get_history(
         skip=skip,
         limit=limit,
         document_type=document_type,
-        days_ago=days_ago
+        days_ago=days_ago,
+        user_id=current_user.id,
+        role=current_user.role
     )
     
     items = []

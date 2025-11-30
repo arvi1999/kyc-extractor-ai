@@ -51,3 +51,28 @@ class BatchExtractionResponse(BaseModel):
     results: List[ExtractionResponse]
     errors: List[dict]
 
+# Auth Schemas
+class UserBase(BaseModel):
+    email: str # Simplified from EmailStr to avoid extra dependency for now, or use EmailStr if pydantic[email] is installed
+    full_name: Optional[str] = None
+
+class UserCreate(UserBase):
+    password: str
+    role: str = "user" # 'admin' or 'user'
+
+class UserResponse(UserBase):
+    id: int
+    role: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True # Pydantic v2 uses from_attributes instead of orm_mode
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+

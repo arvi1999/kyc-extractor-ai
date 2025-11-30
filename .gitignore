@@ -1,11 +1,31 @@
+# Python
 __pycache__/
 *.pyc
 .env
 .venv
 venv/
-.idea/
-.vscode/
 *.log
 build/
 dist/
 *.egg-info/
+
+# IDEs
+.idea/
+.vscode/
+
+# Frontend (Node.js / React)
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+dashboard/npm-debug.log*
+dashboard/yarn-debug.log*
+dashboard/yarn-error.log*
+dashboard/pnpm-debug.log*
+dashboard/lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
