@@ -12,10 +12,13 @@ from kyc_extractor.api.deps import get_current_user, get_current_active_user
 from sqlalchemy.orm import Session
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 
 app = FastAPI(title="Company Name Cleaning (CC) API", version="0.3.0")
+
+# IST Timezone (UTC+5:30)
+IST = timezone(timedelta(hours=5, minutes=30))
 
 # Include Auth Router
 app.include_router(auth_router, tags=["Authentication"])
@@ -120,7 +123,7 @@ async def extract_document(
             "data_quality_score": data_quality_score,
             "validation_results": validation_results,
             "processing_time_ms": processing_time_ms,
-            "uploaded_at": datetime.now(timezone.utc),
+            "uploaded_at": datetime.now(IST),
         }
         
         db_extraction = crud.create_extraction(db, db_data)
@@ -252,7 +255,7 @@ async def extract_batch(
                 "data_quality_score": data_quality_score,
                 "validation_results": validation_results,
                 "processing_time_ms": processing_time_ms,
-                "uploaded_at": datetime.now(timezone.utc),
+                "uploaded_at": datetime.now(IST),
             }
             
             db_extraction = crud.create_extraction(db, db_data)
