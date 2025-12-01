@@ -27,7 +27,7 @@ def get_extractions_history(
     days_ago: Optional[int] = None,
     user_id: Optional[int] = None,
     role: str = "user"
-) -> List[Extraction]:
+) -> tuple[List[Extraction], int]:
     """Get extraction history with filters and RBAC"""
     query = db.query(Extraction)
 
@@ -46,8 +46,11 @@ def get_extractions_history(
 
     # Order by most recent first
     query = query.order_by(Extraction.uploaded_at.desc())
+    
+    # Get total count before pagination
+    total_count = query.count()
 
-    return query.offset(skip).limit(limit).all()
+    return query.offset(skip).limit(limit).all(), total_count
 
 def update_extraction(db: Session, request_id: str, update_data: dict) -> Optional[Extraction]:
     """Update an extraction record"""
