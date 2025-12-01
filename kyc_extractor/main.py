@@ -60,7 +60,26 @@ async def extract_document(
              raise HTTPException(status_code=500, detail=f"Extraction failed: {result['error']}")
 
         # Run validation
-        document_type = result.get('document_type', 'OTHER')
+        # Normalize document type
+        raw_doc_type = result.get('document_type', 'OTHER')
+        
+        # DEBUG LOGGING
+        with open("debug_doc_type.log", "a") as f:
+            f.write(f"File: {file.filename}, Raw Type: '{raw_doc_type}'\n")
+            
+        document_type = raw_doc_type
+        
+        # Map common variations to schema-allowed values
+        if raw_doc_type in ["MSME Certificate", "MSME_CERTIFICATE", "MSME_Certificate", "UDYAM", "UDYAM_REGISTRATION", "Udyam Registration Certificate", "Udyam Registration"]:
+            document_type = "MSME"
+        elif raw_doc_type in ["GST Certificate", "GST_REGISTRATION"]:
+            document_type = "GST_CERTIFICATE"
+        elif raw_doc_type in ["PAN Card", "PAN_CARD"]:
+            document_type = "PAN_CARD"
+            
+        # Update result object with normalized type
+        result['document_type'] = document_type
+
         identification_number = result.get('data', {}).get('identification_number')
         address = result.get('data', {}).get('address', {})
         pincode = address.get('pincode') if isinstance(address, dict) else None
@@ -118,6 +137,13 @@ async def extract_document(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        # Log the full exception
+        import traceback
+        with open("debug_error.log", "a") as f:
+            f.write(f"Error processing {file.filename}: {str(e)}\n")
+            f.write(traceback.format_exc())
+            f.write("-" * 50 + "\n")
+            
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
     finally:
         await file.close()
@@ -166,7 +192,26 @@ async def extract_batch(
                 continue
 
             # Validation
-            document_type = result.get('document_type', 'OTHER')
+            # Normalize document type
+            raw_doc_type = result.get('document_type', 'OTHER')
+            
+            # DEBUG LOGGING
+            with open("debug_doc_type.log", "a") as f:
+                f.write(f"File: {file.filename}, Raw Type: '{raw_doc_type}'\n")
+            
+            document_type = raw_doc_type
+            
+            # Map common variations to schema-allowed values
+            if raw_doc_type in ["MSME Certificate", "MSME_CERTIFICATE", "MSME_Certificate", "UDYAM", "UDYAM_REGISTRATION", "Udyam Registration Certificate", "Udyam Registration"]:
+                document_type = "MSME"
+            elif raw_doc_type in ["GST Certificate", "GST_REGISTRATION"]:
+                document_type = "GST_CERTIFICATE"
+            elif raw_doc_type in ["PAN Card", "PAN_CARD"]:
+                document_type = "PAN_CARD"
+            
+            # Update result object with normalized type
+            result['document_type'] = document_type
+                
             identification_number = result.get('data', {}).get('identification_number')
             address = result.get('data', {}).get('address', {})
             pincode = address.get('pincode') if isinstance(address, dict) else None
